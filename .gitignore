@@ -1,0 +1,13 @@
+# Node
+mentor-ia-frontend/node_modules/
+mentor-ia-frontend/.next/
+mentor-ia-frontend/.env.local
+
+# Python
+mentor-ia-aprendizaje/.venv/
+mentor-ia-aprendizaje/__pycache__/
+mentor-ia-aprendizaje/.env
+*.pyc
+
+# MacOS
+.DS_Store
