@@ -1,5 +1,6 @@
 // // lib/types.ts
 
+// // --- Fuentes usadas en /query ---
 // export interface Fuente {
 //   texto: string;
 //   source_path: string;
@@ -14,11 +15,13 @@
 //   detalle_origen: string;
 //   fuentes: Fuente[];
 // }
-// // Nuevo interfaz para la respuesta OCR
+
+// // --- OCR ---
 // export interface OCRResponse {
 //   texto: string;
 // }
 
+// // --- Documentos en /docs ---
 // export interface DocumentoInfo {
 //   nombre: string;
 //   size_bytes?: number;
@@ -30,7 +33,7 @@
 //   chunks_ingresados: number;
 // }
 
-// //nuevo
+// // Documentos indexados en Qdrant
 // export interface DocumentoIndexadoInfo extends DocumentoInfo {
 //   total_chunks: number;
 // }
@@ -40,41 +43,37 @@
 //   documentos: DocumentoIndexadoInfo[];
 // }
 
-
-
 // // --- Plan de repaso ---
 
 // export interface BloqueRepaso {
-//   dia: number;              // Día relativo (1, 2, 3, ...)
-//   titulo: string;           // Título del bloque
-//   descripcion: string;      // Qué se estudia ese día
+//   dia: number;               // Día relativo (1, 2, 3…)
+//   titulo: string;            // Título del bloque
+//   descripcion: string;       // Contenido del día
 //   duracion_minutos?: number;
-//   recursos?: string[];      // Opcional: recursos sugeridos
+//   recursos?: string[];
 // }
 
-// // OJO: si tu backend usa otro nombre (por ejemplo "plan" en vez de "bloques"),
-// // cambia aquí "bloques" para que coincida.
+// // *** MUY IMPORTANTE ***
+// // Esta interfaz DEBE coincidir EXACTAMENTE con lo que tu backend devuelve.
+// // Tu backend devuelve: tema, fecha_inicio y SESIONES[]
+// // así que debes usar SESIONES, NO “bloques”.
+
+// export interface SesionRepaso {
+//   tipo: string;              // Ej: D+1, D+7, D+30
+//   fecha: string;             // Fecha exacta
+//   descripcion: any;          // Puede ser string o un objeto con "type" y "text"
+// }
+
 // export interface PlanRepasoResponse {
 //   tema: string;
 //   fecha_inicio: string;
-//   bloques: BloqueRepaso[];
+//   sesiones: SesionRepaso[];
 // }
-
-// // NUEVO
-// // export interface DocumentoIndexado {
-// //   nombre: string;
-// //   ruta: string;
-// //   extension: string;
-// // }
-
-// // export interface DocumentosIndexadosResponse {
-// //   documentos: DocumentoIndexado[];
-// // }
-
 
 // lib/types.ts
 
-// --- Fuentes usadas en /query ---
+// ---------- RAG / consulta ----------
+
 export interface Fuente {
   texto: string;
   source_path: string;
@@ -90,12 +89,14 @@ export interface QueryResponse {
   fuentes: Fuente[];
 }
 
-// --- OCR ---
+// ---------- OCR ----------
+
 export interface OCRResponse {
   texto: string;
 }
 
-// --- Documentos en /docs ---
+// ---------- Gestión de documentos (PDFs / imágenes) ----------
+
 export interface DocumentoInfo {
   nombre: string;
   size_bytes?: number;
@@ -117,25 +118,21 @@ export interface DocumentosIndexadosResponse {
   documentos: DocumentoIndexadoInfo[];
 }
 
-// --- Plan de repaso ---
+// ---------- Plan de repaso ----------
 
-export interface BloqueRepaso {
-  dia: number;               // Día relativo (1, 2, 3…)
-  titulo: string;            // Título del bloque
-  descripcion: string;       // Contenido del día
-  duracion_minutos?: number;
-  recursos?: string[];
+// Bloques de descripción especiales que a veces devuelve /plan-repaso
+// (cuando la descripción viene como array de objetos)
+export interface SesionDescripcionBlock {
+  type: string;
+  text: string;
+  extras?: any; // aquí podríamos tipar mejor más adelante si hace falta
 }
 
-// *** MUY IMPORTANTE ***
-// Esta interfaz DEBE coincidir EXACTAMENTE con lo que tu backend devuelve.
-// Tu backend devuelve: tema, fecha_inicio y SESIONES[]
-// así que debes usar SESIONES, NO “bloques”.
-
 export interface SesionRepaso {
-  tipo: string;              // Ej: D+1, D+7, D+30
-  fecha: string;             // Fecha exacta
-  descripcion: any;          // Puede ser string o un objeto con "type" y "text"
+  tipo: string;  // D+1, D+7, etc.
+  fecha: string; // 2025-11-22, etc.
+  // A veces el backend devuelve string, a veces array de bloques {type, text, extras}
+  descripcion: string | SesionDescripcionBlock[];
 }
 
 export interface PlanRepasoResponse {
