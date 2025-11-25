@@ -1,5 +1,9 @@
 # Mentor IA - Sistema de Aprendizaje Inteligente
 
+<img width="1470" height="755" alt="home-mentor-ia" src="https://github.com/user-attachments/assets/a84ffc46-7062-4451-91b1-8c9731ef379e" />
+
+---
+
 [![Next.js](https://img.shields.io/badge/Next.js-15.0.0-black)](https://nextjs.org/)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.115.0-green)](https://fastapi.tiangolo.com/)
 [![Qdrant](https://img.shields.io/badge/Qdrant-1.9.0-blue)](https://qdrant.tech/)
