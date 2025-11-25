@@ -265,6 +265,11 @@ Este módulo gestiona la recepción, procesamiento y distribución de planes de 
 
 El scenario de Make.com consta de 4 módulos principales que procesan automáticamente los planes de estudio:
 
+
+<img width="1333" height="339" alt="make" src="https://github.com/user-attachments/assets/6db11510-8fb4-4954-b524-e527dd3a5b70" />
+
+
+
 #### 1. **Custom WebHook** (ID: 1)
 - **Función**: Recibe el payload JSON del backend
 - **Configuración**: Webhook personalizado con ID único (1593525)
