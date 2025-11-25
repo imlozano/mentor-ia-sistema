@@ -1,4 +1,4 @@
-# Mentor IA - Sistema de Aprendizaje Inteligente
+# Mentor IA - Sistema de Aprendizaje Inteligente 🧠
 
 <img width="1470" height="755" alt="home-mentor-ia" src="https://github.com/user-attachments/assets/a84ffc46-7062-4451-91b1-8c9731ef379e" />
 
