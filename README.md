@@ -263,60 +263,118 @@ Este módulo gestiona la recepción, procesamiento y distribución de planes de 
 
 ## 🔄 Arquitectura del Flujo
 
-## 📊 Diagrama del Flujo de Datos
+El scenario de Make.com consta de 4 módulos principales que procesan automáticamente los planes de estudio:
 
-```mermaid
-graph TD
-    %% Nodos Principales
-    Start((Webhook)) -->|JSON Payload| Iterator[Iterator: Desglosar Sesiones]
-    
-    subgraph "Lógica de Normalización (Text Aggregator)"
-        Iterator -->|Item Individual| Check{¿Tipo de Dato?}
-        Check -- "Array [...]" --> Extract[Extraer propiedad .text]
-        Check -- "String '...'" --> Keep[Usar Texto Original]
-        
-        Extract & Keep --> Format[Formatear Saltos de Línea <br>]
-        Format --> Row[Generar Fila HTML <tr>]
-    end
+#### 1. **Custom WebHook** (ID: 1)
+- **Función**: Recibe el payload JSON del backend
+- **Configuración**: Webhook personalizado con ID único (1593525)
+- **Datos de entrada**: Plan completo con email, tema, sesiones, fuentes
 
-    Row -->|Agregación Final| HTML[Plantilla HTML Completa]
-    HTML -->|Send| Gmail[Gmail: Enviar Reporte]
-    
-    %% Estilos (Opcional)
-    style Start fill:#f9f,stroke:#333,stroke-width:2px
-    style Gmail fill:#ff9999,stroke:#333,stroke-width:2px
-    style Check fill:#ffe6cc,stroke:#d79b00,stroke-width:2px
+#### 2. **Iterator** (ID: 4)
+- **Función**: Procesa el array `sesiones[]` del plan
+- **Mapeo**: `{{1.sesiones}}` - itera sobre cada sesión de estudio
+- **Salida**: Cada sesión individual para procesamiento
+
+#### 3. **Text Aggregator** (ID: 5)
+- **Función**: Construye filas HTML de tabla para cada sesión
+- **Template**:
+```html
+<tr>
+   <td style="white-space: nowrap;">{{4.fecha}}</td>
+   <td><span class="badge">{{4.tipo}}</span></td>
+   <td>
+     {{replace(ifempty(first(map(flatten(add(emptyarray; 4.descripcion)); "text")); 4.descripcion); "/\\n/g"; "<br>")}}
+   </td>
+</tr>
 ```
+- **Manejo especial**: Procesa tipos polimórficos en `descripcion` (string vs array)
 
-El escenario en Make consta de 4 etapas críticas:
+#### 4. **Gmail Sender** (ID: 3)
+- **Función**: Envía email HTML formateado
+- **Asunto**: `Mentor IA 👋 🤖`
+- **Destinatario**: `{{1.email}}` del webhook original
 
-1.  **Ingesta de Datos (Webhook):** Recibe un payload JSON con información jerárquica (Datos del usuario -> Lista de Fuentes -> Lista de Sesiones).
-2.  **Desglose de Iteraciones (Iterator):** Separa el array `sesiones[]` para procesar cada fecha y actividad de manera individual.
-3.  **Normalización y Agregación (Text Aggregator):**
-    * Construye dinámicamente las filas (`<tr>`) de la tabla HTML.
-    * **Manejo de Excepciones:** Implementa lógica avanzada para normalizar datos inconsistentes en el campo `descripcion` (ver *Detalle Técnico*).
-4.  **Entrega (Gmail):** Ensambla el HTML base con las filas agregadas y envía el correo final al usuario.
+## 📧 Plantilla de Email Completa
+
+```html
+<!DOCTYPE html>
+<html>
+<head>
+<style>
+  /* Estilos responsivos */
+  body { font-family: Arial, sans-serif; color: #333; line-height: 1.6; }
+  .container { max-width: 600px; margin: 0 auto; border: 1px solid #ddd; padding: 20px; border-radius: 8px; }
+  h1 { color: #2c3e50; border-bottom: 2px solid #e74c3c; padding-bottom: 10px; }
+  h2 { color: #e74c3c; margin-top: 20px; }
+  .meta-data { background-color: #f9f9f9; padding: 10px; border-radius: 5px; font-size: 0.9em; }
+  table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+  th, td { border: 1px solid #ddd; padding: 8px; text-align: left; vertical-align: top;}
+  th { background-color: #f2f2f2; }
+  .badge { background-color: #3498db; color: white; padding: 2px 6px; border-radius: 4px; font-size: 0.8em; }
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>Plan: {{1.tema}}</h1>
+
+  <div class="meta-data">
+    <p><strong>Origen:</strong> {{1.origen}}</p>
+    <p><strong>Fecha de Inicio:</strong> {{1.fecha_inicio}}</p>
+    <p><em>{{1.detalle_origen}}</em></p>
+  </div>
+
+  <h2>📚 Fuentes Utilizadas</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>Score</th>
+        <th>Texto Extraído</th>
+      </tr>
+    </thead>
+    <tbody>
+      {{#each 1.fuentes}}
+      <tr>
+        <td>{{score}}</td>
+        <td>{{texto}}</td>
+      </tr>
+      {{/each}}
+    </tbody>
+  </table>
+
+  <h2>📅 Sesiones Programadas</h2>
+  <table>
+    <thead>
+      <tr>
+        <th width="20%">Fecha</th>
+        <th width="10%">Tipo</th>
+        <th>Descripción</th>
+      </tr>
+    </thead>
+    <tbody>
+       {{5.text}}
+    </tbody>
+  </table>
+</div>
+</body>
+</html>
+```
 
 ## 🛠️ Solución Técnica: Manejo de Datos Polimórficos
 
-Uno de los desafíos principales de esta integración fue la inconsistencia en el tipo de dato del campo `descripcion` proveniente del origen:
+Uno de los desafíos principales fue el campo `descripcion` que puede ser:
+- **String**: `"Texto directo..."`
+- **Array**: `[{ type: 'text', text: '...' }]`
 
-* **Caso A:** Array de objetos (`[{ type: 'text', text: '...' }]`).
-* **Caso B:** String plano (`"Texto directo..."`).
-
-Se implementó una fórmula robusta en el **Text Aggregator** para estandarizar la entrada antes del renderizado, evitando errores de tipo `Invalid Array` o `RuntimeError`.
-
-**Lógica Implementada (Pseudocódigo):**
-
-```javascript
-// Pseudocódigo de la lógica implementada en Make
-if (dato es Array) {
-    extraer propiedad "text";
-} else {
-    usar dato original como string;
-}
-aplicar formato de saltos de línea (\n -> <br>);
+**Fórmula utilizada en Text Aggregator:**
 ```
+{{replace(ifempty(first(map(flatten(add(emptyarray; 4.descripcion)); "text")); 4.descripcion); "/\\n/g"; "<br>")}}
+```
+
+Esta fórmula:
+1. Verifica si `descripcion` es array
+2. Extrae la propiedad `text` si existe
+3. Usa el valor original si es string
+4. Convierte saltos de línea `\n` a `<br>` para HTML
 
 ## 🔌 API
 
