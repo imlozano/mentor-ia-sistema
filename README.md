@@ -11,11 +11,11 @@ Un sistema multiagente de IA diseñado para apoyar el aprendizaje mediante Retri
 ## 📋 Tabla de Contenidos
 
 - [Características](#-características)
-- [Arquitectura](#-arquitectura)
-- [Tecnologías](#-tecnologías)
+- [Arquitectura](#arquitectura)
+- [Tecnologías](#tecnologías)
 - [Instalación](#-instalación)
-- [Configuración](#-configuración)
-- [Ejecución](#-ejecución)
+- [Configuración](#configuración)
+- [Ejecución](#ejecución)
 - [Uso](#-uso)
 - [API](#-api)
 - [Despliegue](#-despliegue)
@@ -44,7 +44,7 @@ Un sistema multiagente de IA diseñado para apoyar el aprendizaje mediante Retri
 - **Accesible**: Diseño inclusivo con componentes shadcn/ui
 - **Intuitiva**: Tres pestañas principales: Contexto, Documentos, OCR
 
-## 🏗️ Arquitectura
+##  <a name="arquitectura"></a> 🏗️ Arquitectura
 
 ```
 ┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
@@ -68,7 +68,7 @@ Un sistema multiagente de IA diseñado para apoyar el aprendizaje mediante Retri
                     └─────────────────┘
 ```
 
-## 🛠️ Tecnologías
+## <a name="tecnologías"></a>  🛠️ Tecnologías
 
 ### Backend
 - **FastAPI**: Framework web moderno para APIs REST
@@ -131,7 +131,7 @@ cd ../mentor-ia-frontend
 npm install
 ```
 
-## ⚙️ Configuración
+## <a name="configuración"></a> ⚙️ Configuración
 
 ### Variables de Entorno del Backend
 
@@ -182,7 +182,7 @@ NEXT_PUBLIC_BACKEND_URL=http://127.0.0.1:8000
 3. Configurar envío de email
 4. Copiar la URL del webhook
 
-## ▶️ Ejecución
+## <a name="ejecución"></a>  ▶️ Ejecución
 
 ### Modo Desarrollo
 
