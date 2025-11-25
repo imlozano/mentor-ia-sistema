@@ -110,12 +110,14 @@ export interface UploadPdfResponse {
 
 // Documentos indexados en Qdrant
 export interface DocumentoIndexadoInfo extends DocumentoInfo {
-  total_chunks: number;
+  total_chunks?: number;
+  chunks?: number;
 }
 
 export interface DocumentosIndexadosResponse {
   total_chunks: number;
   documentos: DocumentoIndexadoInfo[];
+  total_documentos: number;
 }
 
 // ---------- Plan de repaso ----------

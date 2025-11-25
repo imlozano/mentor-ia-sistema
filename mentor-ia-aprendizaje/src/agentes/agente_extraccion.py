@@ -1003,6 +1003,8 @@ class AgenteExtraccion:
             os.path.join(carpeta, "*.png"),
             os.path.join(carpeta, "*.jpg"),
             os.path.join(carpeta, "*.jpeg"),
+            os.path.join(carpeta, "*.txt"),
+            os.path.join(carpeta, "*.md"),
         ]
 
         rutas: List[str] = []
@@ -1077,6 +1079,28 @@ class AgenteExtraccion:
                 except Exception as e:
                     print(f"[WARN] Error usando Vision OCR en {ruta}: {e}")
 
+            # --------------- ARCHIVOS DE TEXTO (.txt, .md) ---------------
+            elif ext in {".txt", ".md"}:
+                print(f"[INGESTA] Leyendo archivo de texto: {ruta}")
+                try:
+                    with open(ruta, 'r', encoding='utf-8') as f:
+                        contenido = f.read().strip()
+
+                    print(f"[INGESTA]  -> Texto leído: {len(contenido)} caracteres.")
+
+                    if not contenido:
+                        print(f"[WARN] El archivo de texto {ruta} está vacío.")
+                        continue
+
+                    documentos.append(
+                        {
+                            "source_path": ruta,
+                            "texto": contenido,
+                        }
+                    )
+                except Exception as e:
+                    print(f"[WARN] Error leyendo archivo de texto {ruta}: {e}")
+
             # --------------- OTROS ---------------
             else:
                 print(f"[INGESTA] Tipo de archivo no soportado, se ignora: {ruta}")
@@ -1116,6 +1140,8 @@ class AgenteExtraccion:
             ext = ext.lower()
             if ext in {".png", ".jpg", ".jpeg"}:
                 tipo_fuente = "imagen"
+            elif ext in {".txt", ".md"}:
+                tipo_fuente = "texto"
             else:
                 tipo_fuente = "pdf"
 

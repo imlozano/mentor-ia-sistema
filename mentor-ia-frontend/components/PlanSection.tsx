@@ -180,6 +180,7 @@ interface PlanRepaso {
 export function PlanSection() {
   const [tema, setTema] = useState("");
   const [fecha, setFecha] = useState("");
+  const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
 
   const [plan, setPlan] = useState<PlanRepaso | null>(null);
@@ -193,7 +194,7 @@ export function PlanSection() {
     setError(null);
 
     try {
-      const p = await createPlan(tema, fecha || undefined);
+      const p = await createPlan(tema, fecha || undefined, email || undefined);
       setPlan(p);
     } catch (e: any) {
       setError("Error generando el plan de repaso");
@@ -253,6 +254,14 @@ export function PlanSection() {
             className="rounded-xl bg-neutral-900 px-3 py-2 text-sm text-neutral-100 border border-neutral-800 w-44"
             value={fecha}
             onChange={(e) => setFecha(e.target.value)}
+          />
+
+          <input
+            type="email"
+            placeholder="Email para envío automático (opcional)"
+            className="rounded-xl bg-neutral-900 px-3 py-2 text-sm text-neutral-100 border border-neutral-800"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
           />
 
           <button

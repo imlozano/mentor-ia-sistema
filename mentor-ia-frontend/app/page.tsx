@@ -1,145 +1,71 @@
-// import Image from "next/image";
+import { Brain } from "lucide-react"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { StudyAssistant } from "@/components/study-assistant"
+import { ReviewPlan } from "@/components/review-plan"
 
-// export default function Home() {
-//   return (
-//     <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-//       <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-//         <Image
-//           className="dark:invert"
-//           src="/next.svg"
-//           alt="Next.js logo"
-//           width={100}
-//           height={20}
-//           priority
-//         />
-//         <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-//           <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-//             To get started, edit the page.tsx file.
-//           </h1>
-//           <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-//             Looking for a starting point or more instructions? Head over to{" "}
-//             <a
-//               href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-//               className="font-medium text-zinc-950 dark:text-zinc-50"
-//             >
-//               Templates
-//             </a>{" "}
-//             or the{" "}
-//             <a
-//               href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-//               className="font-medium text-zinc-950 dark:text-zinc-50"
-//             >
-//               Learning
-//             </a>{" "}
-//             center.
-//           </p>
-//         </div>
-//         <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-//           <a
-//             className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-//             href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-//             target="_blank"
-//             rel="noopener noreferrer"
-//           >
-//             <Image
-//               className="dark:invert"
-//               src="/vercel.svg"
-//               alt="Vercel logomark"
-//               width={16}
-//               height={16}
-//             />
-//             Deploy Now
-//           </a>
-//           <a
-//             className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-//             href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-//             target="_blank"
-//             rel="noopener noreferrer"
-//           >
-//             Documentation
-//           </a>
-//         </div>
-//       </main>
-//     </div>
-//   );
-// }
-
-// app/page.tsx
-"use client";
-
-import { useState } from "react";
-import { QueryBox } from "@/components/QueryBox";
-import { AnswerCard } from "@/components/AnswerCard";
-import { SourcesList } from "@/components/SourcesList";
-import { askQuery } from "@/lib/api";
-import { Fuente, QueryResponse } from "@/lib/types";
-
-import { PlanSection } from "@/components/PlanSection"; //nuevo
-
-export default function HomePage() {
-  const [loading, setLoading] = useState(false);
-  const [pregunta, setPregunta] = useState<string | undefined>(undefined);
-  const [respuesta, setRespuesta] = useState<string | undefined>(undefined);
-  const [origen, setOrigen] = useState<string | undefined>(undefined);
-  const [detalle, setDetalle] = useState<string | undefined>(undefined);
-  const [fuentes, setFuentes] = useState<Fuente[]>([]);
-  const [error, setError] = useState<string | null>(null);
-
-  async function handleAsk(p: string) {
-    setLoading(true);
-    setError(null);
-    setRespuesta(undefined);
-    setFuentes([]);
-
-    try {
-      const res: QueryResponse = await askQuery(p);
-      setPregunta(res.pregunta);
-      setRespuesta(res.respuesta);
-      setOrigen(res.origen);
-      setDetalle(res.detalle_origen);
-      setFuentes(res.fuentes || []);
-    } catch (e: any) {
-      console.error(e);
-      setError(e?.message || "Error al consultar el backend");
-    } finally {
-      setLoading(false);
-    }
-  }
-
+export default function Home() {
   return (
-    <div className="space-y-10">
-      <section className="space-y-4">
-        <h1 className="text-2xl font-semibold tracking-tight">
-          Asistente de estudio con RAG
-        </h1>
-        <p className="max-w-2xl text-sm text-neutral-400">
-          Este frontend consulta tu backend FastAPI con Qdrant y Gemini. Puedes
-          hacer preguntas sobre tus PDFs y sobre imágenes que hayan pasado por
-          OCR. El sistema te mostrará también los fragmentos usados como
-          contexto.
-        </p>
-      </section>
+    <div className="min-h-screen w-full bg-background selection:bg-primary/10 selection:text-primary">
+      {/* Header */}
+      <header className="w-full border-b border-border/40 bg-background">
+        <div className="px-6 lg:px-8 h-16 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="bg-primary/10 p-2.5 rounded-xl">
+              <Brain className="h-6 w-6 text-primary" />
+            </div>
+            <div>
+              <h1 className="text-xl font-bold tracking-tight text-foreground">Mentor IA</h1>
+              <p className="text-sm text-muted-foreground hidden sm:block leading-tight">
+                Asistente inteligente de aprendizaje
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-4">
+            <div className="h-2 w-2 rounded-full bg-green-500 animate-pulse" />
+            <span className="text-sm font-medium text-muted-foreground">Online</span>
+          </div>
+        </div>
+      </header>
 
-      <section className="space-y-4">
-        <QueryBox onSubmit={handleAsk} loading={loading} />
+      {/* Main Content - Full Screen */}
+      <main className="w-full min-h-[calc(100vh-4rem)] bg-background">
+        <Tabs defaultValue="assistant" className="w-full h-full flex flex-col">
+          {/* Tab Navigation */}
+          <div className="w-full px-6 lg:px-8 py-6 border-b border-border/40 bg-background">
+            <div className="flex items-center justify-center">
+              <TabsList className="grid w-full max-w-lg grid-cols-2 p-1.5 bg-muted/50 rounded-xl">
+                <TabsTrigger
+                  value="assistant"
+                  className="data-[state=active]:bg-background data-[state=active]:shadow-sm text-sm font-medium rounded-lg transition-all"
+                >
+                  Asistente de Estudio
+                </TabsTrigger>
+                <TabsTrigger
+                  value="plan"
+                  className="data-[state=active]:bg-background data-[state=active]:shadow-sm text-sm font-medium rounded-lg transition-all"
+                >
+                  Plan de Repaso
+                </TabsTrigger>
+              </TabsList>
+            </div>
+          </div>
 
-        {error && (
-          <p className="mt-4 w-full max-w-2xl mx-auto text-xs text-red-400 bg-red-950/40 border border-red-900/60 rounded-xl px-3 py-2">
-            {error}
-          </p>
-        )}
+          {/* Tab Content - Full Height */}
+          <div className="flex-1 w-full overflow-hidden">
+            <TabsContent value="assistant" className="w-full h-full m-0 outline-none data-[state=active]:animate-in data-[state=active]:fade-in-0 data-[state=active]:duration-300">
+              <div className="w-full h-full px-6 lg:px-8 py-6">
+                <StudyAssistant />
+              </div>
+            </TabsContent>
 
-        <AnswerCard
-          pregunta={pregunta}
-          respuesta={respuesta}
-          origen={origen}
-          detalle_origen={detalle}
-        />
-
-        <SourcesList fuentes={fuentes} />
-        {/* nuevo */}
-        <PlanSection /> 
-      </section>
+            <TabsContent value="plan" className="w-full h-full m-0 outline-none data-[state=active]:animate-in data-[state=active]:fade-in-0 data-[state=active]:duration-300">
+              <div className="w-full h-full px-6 lg:px-8 py-6">
+                <ReviewPlan />
+              </div>
+            </TabsContent>
+          </div>
+        </Tabs>
+      </main>
     </div>
-  );
+  )
 }

@@ -54,59 +54,8 @@ export default function RootLayout({
 }) {
   return (
     <html lang="es">
-      <body
-        className={`${inter.className} bg-neutral-950 text-neutral-50 min-h-screen`}
-      >
-        <div className="min-h-screen flex flex-col">
-          {/* Top bar */}
-          <header className="border-b border-neutral-900 bg-black/70 backdrop-blur">
-            <div className="mx-auto flex h-14 max-w-5xl items-center justify-between px-4">
-              <div className="flex items-center gap-2">
-                <div className="h-7 w-7 rounded-xl bg-indigo-500 flex items-center justify-center text-xs font-bold">
-                  M
-                </div>
-                <div className="flex flex-col leading-tight">
-                  <span className="text-sm font-semibold">
-                    Mentor IA de Aprendizaje
-                  </span>
-                  <span className="text-[11px] text-neutral-500">
-                    RAG · PDFs · Imágenes OCR · Qdrant · Gemini
-                  </span>
-                </div>
-              </div>
-
-              <nav className="flex items-center gap-4 text-xs text-neutral-400">
-                <Link
-                  href="/"
-                  className="hover:text-neutral-100 transition"
-                >
-                  Asistente de estudio
-                </Link>
-                <Link
-                  href="/ocr"
-                  className="hover:text-neutral-100 transition"
-                >
-                  OCR de imágenes
-                </Link>
-                <a href="/docs" className="hover:text-neutral-100">
-                  Documentos
-                </a>
-              </nav>
-            </div>
-          </header>
-
-          {/* Main content */}
-          <main className="flex-1">
-            <div className="mx-auto max-w-5xl px-4 py-8">{children}</div>
-          </main>
-
-          <footer className="border-t border-neutral-900 bg-black/70">
-            <div className="mx-auto max-w-5xl px-4 py-3 text-[11px] text-neutral-500 flex justify-between">
-              <span>Proyecto: Mentor IA · Electiva IA</span>
-              <span>Backend: FastAPI · Qdrant · Google Vision</span>
-            </div>
-          </footer>
-        </div>
+      <body className={`${inter.className} antialiased`}>
+        {children}
       </body>
     </html>
   );

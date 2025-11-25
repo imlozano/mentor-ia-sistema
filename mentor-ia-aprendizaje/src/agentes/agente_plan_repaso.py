@@ -8,6 +8,7 @@ Agente encargado de:
 """
 
 import os
+import requests
 from datetime import date, timedelta
 from typing import Any, Dict, List, Optional
 
@@ -22,6 +23,8 @@ from src.embeddings import (
 from src.similitud import buscar_similares
 
 load_dotenv()
+print(f"DEBUG: Current working directory: {os.getcwd()}")
+print(f"DEBUG: .env file exists: {os.path.exists('.env')}")
 
 
 class AgentePlanRepaso:
@@ -270,6 +273,7 @@ class AgentePlanRepaso:
         self,
         tema: str,
         fecha_inicio: Optional[date] = None,
+        email: Optional[str] = None,
     ) -> Dict[str, Any]:
         """
         Crea un plan de repaso con D+1, D+7, D+14, D+30.
@@ -393,17 +397,8 @@ Actividades:
                 }
             )
 
-        # 3) Armar respuesta final
-        # return {
-        #     "tema": tema,
-        #     "fecha_inicio": fecha_inicio.isoformat(),
-        #     "origen": origen,               # "pdf" o "modelo"
-        #     "detalle_origen": detalle_origen,
-        #     "fuentes": contexto["fuentes"],  # útil para debug / UI / auditoría
-        #     "sesiones": sesiones,
-        # }
-
-        return {
+        # 3) Preparar respuesta final
+        plan_response = {
             "tema": tema,
             "fecha_inicio": fecha_inicio.isoformat(),
             "origen": origen,               # "pdf" o "modelo"
@@ -411,12 +406,27 @@ Actividades:
             "fuentes": contexto["fuentes"] if uso_pdf else [],  # útil para debug / UI / auditoría
             "sesiones": sesiones,
         }
-        # return { #<- NO FUNCIONA, HAY QUE USAR EL DE ARRIBA
-        #     "tema": tema,
-        #     "fecha_inicio": fecha_inicio.isoformat(),
-        #     "origen": origen,
-        #     "detalle_origen": detalle_origen,
-        #     "fuentes": fuentes if uso_pdf else [],
-        #     "sesiones": sesiones,
-        # }
+
+        # 4) Si se proporcionó email, enviar webhook para automatización
+        if email:
+            webhook_url = os.getenv("MAKE_WEBHOOK_URL")  # URL del webhook de Make.com
+            print(f"DEBUG: MAKE_WEBHOOK_URL = {webhook_url}")  # Debug
+            if webhook_url:
+                try:
+                    webhook_data = {
+                        "email": email,
+                        **plan_response
+                    }
+                    print(f"DEBUG: Enviando webhook a: {webhook_url}")
+                    print(f"DEBUG: Datos del webhook: {webhook_data}")
+                    response = requests.post(webhook_url, json=webhook_data, timeout=5)
+                    print(f"Webhook enviado a Make.com: {response.status_code}")
+                    if response.status_code != 200:
+                        print(f"Respuesta de Make.com: {response.text}")
+                except Exception as e:
+                    print(f"Error enviando webhook: {e}")
+            else:
+                print("MAKE_WEBHOOK_URL no configurada, omitiendo envío de webhook")
+
+        return plan_response
 

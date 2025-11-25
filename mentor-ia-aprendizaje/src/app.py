@@ -31,6 +31,7 @@ from src.agentes.agente_respuesta import AgenteRespuesta  # <- NUEVO
 from src.ocr_vision import extraer_texto_imagen_vision # <- NUEVO
 
 import os #<- NUEVO
+import requests  # Para enviar webhooks
 
 from datetime import date #<- NUEVO
 from pydantic import BaseModel #<- NUEVO
@@ -72,8 +73,9 @@ class QueryRequest(BaseModel):
 
 class PlanRepasoRequest(BaseModel):
     tema: str
-   # fecha_inicio: date #<- NUEVO
+    # fecha_inicio: date #<- NUEVO
     fecha_inicio: date | None = None #<- NUEVO
+    email: str | None = None  # Para envío automático por email
 
 # ---------------- LISTAR DOCUMENTOS ----------------
 
@@ -82,58 +84,56 @@ class DocumentoInfo(BaseModel):
     size_bytes: int
     tipo: str
 
-@app.get("/docs", response_model=List[DocumentoInfo])
+@app.get("/list-docs", response_model=List[DocumentoInfo])
 def listar_documentos():
     """
     Devuelve la lista de PDFs e imágenes que están en data/ejemplos.
-    Esto sirve para que el frontend muestre qué hay indexado.
+    Esto sirve para que el frontend muestre qué hay disponible para indexar.
     """
-    # FUNCIONAL - PERO SE CAMBIO POR UNA VERSIÓN MÁS COMPLETA ABAJO
-    # carpeta = Path("data/ejemplos")
-    # if not carpeta.exists():
-    #     return []
+    try:
+        docs_dir = "data/ejemplos"
+        if not os.path.exists(docs_dir):
+            print(f"Directorio {docs_dir} no existe")
+            return []
 
-    # docs: List[DocumentoInfo] = []
-    # for ruta in carpeta.iterdir():
-    #     if ruta.is_file() and ruta.suffix.lower() in {".pdf", ".png", ".jpg", ".jpeg"}:
-    #         docs.append(
-    #             DocumentoInfo(
-    #                 nombre=ruta.name,
-    #                 size_bytes=ruta.stat().st_size,
-    #                 tipo=ruta.suffix.lower().lstrip("."),
-    #             )
-    #         )
+        docs: List[DocumentoInfo] = []
 
-    # return docs
+        for item in os.listdir(docs_dir):
+            # Saltar carpetas y ficheros raros (.DS_Store, etc.)
+            if item.startswith("."):
+                continue
 
-    if not BASE_DOCS_DIR.exists():
+            item_path = os.path.join(docs_dir, item)
+            if not os.path.isfile(item_path):
+                continue
+
+            _, ext = os.path.splitext(item)
+            ext = ext.lower()
+            if ext not in {".pdf", ".png", ".jpg", ".jpeg", ".txt", ".md"}:
+                continue
+
+            try:
+                size_bytes = os.path.getsize(item_path)
+                docs.append(
+                    DocumentoInfo(
+                        nombre=item,
+                        size_bytes=size_bytes,
+                        tipo=ext.lstrip(".") or "desconocido",
+                    )
+                )
+            except OSError as e:
+                print(f"Error obteniendo tamaño de {item_path}: {e}")
+                continue
+
+        # Ordenar por nombre para que se vea bonito y estable
+        docs.sort(key=lambda d: d.nombre.lower())
+
+        return docs
+    except Exception as e:
+        print(f"Error in listar_documentos: {e}")
+        import traceback
+        traceback.print_exc()
         return []
-
-    docs: List[DocumentoInfo] = []
-
-    for ruta in BASE_DOCS_DIR.iterdir():
-        # Saltar carpetas y ficheros raros (.DS_Store, etc.)
-        if not ruta.is_file():
-            continue
-        if ruta.name.startswith("."):
-            continue
-
-        ext = ruta.suffix.lower()
-        if ext not in {".pdf", ".png", ".jpg", ".jpeg"}:
-            continue
-
-        docs.append(
-            DocumentoInfo(
-                nombre=ruta.name,
-                size_bytes=ruta.stat().st_size,
-                tipo=ext.lstrip(".") or "desconocido",
-            )
-        )
-
-    # Ordenar por nombre para que se vea bonito y estable
-    docs.sort(key=lambda d: d.nombre.lower())
-
-    return docs
 # ---------------------------------------------------
 @app.get("/health")
 def health_check():
@@ -144,7 +144,7 @@ def health_check():
 def crear_plan_repaso(request: PlanRepasoRequest):
     # plan = analisis_agent.crear_plan_repaso(request.tema)
     # return plan
-    return plan_agent.crear_plan(request.tema, request.fecha_inicio) #<- NUEVO
+    return plan_agent.crear_plan(request.tema, request.fecha_inicio, request.email) #<- NUEVO
 
 
 # FUNCIONAL - PERO SE CAMBIO POR UNA SALIDA MAS LIMPIA
@@ -229,16 +229,23 @@ def ingestar_documentos():
 #         "chunks_ingresados": chunks_ingresados,
 #     }
 
-# NUEVO - SUBIR PDF E INGESTAR USANDO BASE_DOCS_DIR
-@app.post("/upload-pdf")
-async def upload_pdf(file: UploadFile = File(...)):
+# NUEVO - SUBIR DOCUMENTO E INGESTAR USANDO BASE_DOCS_DIR
+@app.post("/upload-document")
+async def upload_document(file: UploadFile = File(...)):
     """
-    Sube un PDF a BASE_DOCS_DIR y lanza la ingesta sobre esa carpeta.
+    Sube un documento (PDF, TXT, MD, imagen) a BASE_DOCS_DIR y lanza la ingesta sobre esa carpeta.
     """
 
     filename = file.filename or ""
-    if not filename.lower().endswith(".pdf"):
-        raise HTTPException(status_code=400, detail="Solo se permiten archivos PDF")
+    _, ext = os.path.splitext(filename)
+    ext = ext.lower()
+
+    allowed_extensions = {".pdf", ".txt", ".md", ".png", ".jpg", ".jpeg"}
+    if ext not in allowed_extensions:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Tipo de archivo no soportado. Extensiones permitidas: {', '.join(allowed_extensions)}"
+        )
 
     # Usamos la carpeta base unificada
     upload_dir = BASE_DOCS_DIR
@@ -335,28 +342,73 @@ async def ocr_imagen(file: UploadFile = File(...)):
 @app.get("/documentos-indexados")
 def documentos_indexados():
     """
-    Devuelve la lista de archivos (PDFs / imágenes) presentes en BASE_DOCS_DIR.
-    Es solo informativo para el frontend.
+    Devuelve la lista de documentos que han sido indexados en Qdrant.
+    Consulta la base de datos vectorial para obtener documentos únicos indexados.
     """
-    if not BASE_DOCS_DIR.exists():
-        return {"documentos": []}
+    try:
+        from src.embeddings import crear_cliente_qdrant, VectorConfig
 
-    documentos = []
+        # Conectar a Qdrant
+        client = crear_cliente_qdrant()
+        vector_config = VectorConfig()
 
-    for path in BASE_DOCS_DIR.glob("*"):
-        if not path.is_file():
-            continue
-        if path.name.startswith("."):
-            continue
-
-        documentos.append(
-            {
-                "nombre": path.name,
-                "ruta": str(path),
-                "extension": path.suffix.lower(),
-            }
+        # Hacer scroll para obtener todos los puntos (con límite razonable)
+        # Usamos scroll para obtener información de documentos indexados
+        scroll_result = client.scroll(
+            collection_name=vector_config.collection_name,
+            limit=10000,  # Límite alto para obtener todos
+            with_payload=True,
+            with_vectors=False
         )
 
-    documentos.sort(key=lambda d: d["nombre"].lower())
+        # Extraer documentos únicos de los payloads
+        documentos_unicos = {}
+        total_chunks = 0
 
-    return {"documentos": documentos}
+        for point in scroll_result[0]:  # scroll_result[0] contiene los puntos
+            payload = point.payload or {}
+            source_path = payload.get("source_path", "")
+            nombre_archivo = payload.get("nombre_archivo", "")
+            tipo_fuente = payload.get("tipo_fuente", "desconocido")
+
+            if source_path and nombre_archivo:
+                # Usar source_path como clave única
+                if source_path not in documentos_unicos:
+                    documentos_unicos[source_path] = {
+                        "nombre": nombre_archivo,
+                        "ruta": source_path,
+                        "tipo": tipo_fuente,
+                        "chunks": 0
+                    }
+                documentos_unicos[source_path]["chunks"] += 1
+                total_chunks += 1
+
+        # Convertir a lista y ordenar
+        documentos = list(documentos_unicos.values())
+        documentos.sort(key=lambda d: d["nombre"].lower())
+
+        return {
+            "documentos": documentos,
+            "total_chunks": total_chunks,
+            "total_documentos": len(documentos)
+        }
+
+    except Exception as e:
+        print(f"Error consultando documentos indexados: {e}")
+        return {
+            "documentos": [],
+            "total_chunks": 0,
+            "total_documentos": 0
+        }
+
+# ---------------- WEBHOOK PARA ENVÍO DE EMAIL ----------------
+@app.post("/webhook/plan-generado")
+def webhook_plan_generado(data: dict):
+    """
+    Endpoint para que Make.com reciba notificaciones de planes generados.
+    Espera un JSON con el plan completo y email destino.
+    """
+    # Aquí Make.com procesará el email
+    # Por ahora, solo loggeamos
+    print("Webhook recibido:", data)
+    return {"status": "received"}

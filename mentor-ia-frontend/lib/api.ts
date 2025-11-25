@@ -137,11 +137,12 @@ export async function askQuery(pregunta: string): Promise<QueryResponse> {
 // -------- /plan-repaso --------
 export async function createPlan(
   tema: string,
-  fechaInicio?: string
+  fechaInicio?: string,
+  email?: string
 ): Promise<PlanRepasoResponse> {
-  const body = fechaInicio
-    ? { tema, fecha_inicio: fechaInicio }
-    : { tema };
+  const body: any = { tema };
+  if (fechaInicio) body.fecha_inicio = fechaInicio;
+  if (email) body.email = email;
 
   const res = await fetch(`${BACKEND_URL}/plan-repaso`, {
     method: "POST",
@@ -177,35 +178,35 @@ export async function ocrImage(file: File): Promise<OCRResponse> {
   return res.json();
 }
 
-// -------- /docs (listar archivos locales en data/ejemplos) --------
+// -------- /list-docs (listar archivos locales en data/ejemplos) --------
 export async function listDocs(): Promise<DocumentoInfo[]> {
-  const res = await fetch(`${BACKEND_URL}/docs`, {
+  const res = await fetch(`${BACKEND_URL}/list-docs`, {
     method: "GET",
   });
 
   if (!res.ok) {
     const text = await res.text().catch(() => "");
-    console.error("Error en /docs:", res.status, text);
+    console.error("Error en /list-docs:", res.status, text);
     throw new Error("Error al listar documentos");
   }
 
   return res.json();
 }
 
-// -------- /upload-pdf --------
-export async function uploadPdf(file: File): Promise<UploadPdfResponse> {
+// -------- /upload-document --------
+export async function uploadDocument(file: File): Promise<UploadPdfResponse> {
   const formData = new FormData();
   formData.append("file", file);
 
-  const res = await fetch(`${BACKEND_URL}/upload-pdf`, {
+  const res = await fetch(`${BACKEND_URL}/upload-document`, {
     method: "POST",
     body: formData,
   });
 
   if (!res.ok) {
     const text = await res.text().catch(() => "");
-    console.error("Error en /upload-pdf:", res.status, text);
-    throw new Error("Error al subir el PDF");
+    console.error("Error en /upload-document:", res.status, text);
+    throw new Error("Error al subir el documento");
   }
 
   return res.json();
@@ -219,7 +220,7 @@ export async function getIndexedDocuments(): Promise<DocumentosIndexadosResponse
 
   if (!res.ok) {
     const text = await res.text().catch(() => "");
-    console.error("Error en /documentos-indexados:", res.status, text);
+    console.error("Error en /documentos-indexados:", res.status, text.substring(0, 500));
     throw new Error("Error al consultar documentos indexados");
   }
 

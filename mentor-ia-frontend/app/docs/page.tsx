@@ -149,7 +149,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { uploadPdf, getIndexedDocuments } from "@/lib/api";
+import { uploadDocument, getIndexedDocuments } from "@/lib/api";
 import type { DocumentoIndexadoInfo } from "@/lib/types";
 
 export default function DocsPage() {
@@ -183,7 +183,7 @@ export default function DocsPage() {
     setMessage(null);
 
     try {
-      const res = await uploadPdf(file);
+      const res = await uploadDocument(file);
       setMessage(
         `Se subió "${res.filename}" y se ingestaron ${res.chunks_ingresados} chunks.`,
       );
