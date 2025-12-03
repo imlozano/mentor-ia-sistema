@@ -51,7 +51,7 @@ def crear_cliente_vision() -> vision.ImageAnnotatorClient:
             "- Define GOOGLE_VISION_KEY (con el JSON completo) para producción, o\n"
             "- Define GOOGLE_APPLICATION_CREDENTIALS apuntando al archivo .json en local."
         )
-
+    
     ruta = Path(cred_path)
     if not ruta.exists():
         raise RuntimeError(
